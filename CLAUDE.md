@@ -31,26 +31,31 @@ components/ ──useNotes()──▶ context/NotesContext ──api──▶ ap
 ```
 
 ### 상태 관리 (`src/context/NotesContext.tsx`)
+
 - 전역 상태는 `NotesProvider` 한 곳에만 존재. `notes`, `loading`, `error`와 mutation(`createNote`, `updateNote`, `deleteNote`)을 노출한다 — **이름은 `src/api/notes.ts`와 1:1로 맞춘다**.
 - mutation은 항상 **서버 응답을 받은 뒤 로컬 state를 갱신**한다 (낙관적 업데이트 아님). 새 API 함수 추가 시 동일 패턴 유지.
 - `useNotes()` 훅은 Provider 바깥에서 호출 시 throw — Provider 트리 안에서만 사용.
 
 ### API 레이어 (`src/api/notes.ts`)
+
 - `API_URL`은 하드코딩(`http://localhost:3001`). 환경 변수가 아니므로 포트 변경 시 수정 필요.
 - `createNote`/`updateNote`는 호출 시점에 `createdAt`/`updatedAt`을 ISO 문자열로 주입한다 — 타임스탬프 책임은 서버가 아닌 클라이언트.
 - `Omit`/`Partial<Note>`로 입력 타입을 좁히는 패턴 유지.
 
 ### UI 구조 (`src/App.tsx` + `src/components/`)
+
 - `App`이 `selectedNoteId`와 `isCreating` 두 개의 로컬 상태로 화면 모드를 결정 — "선택", "새로 만들기", "아무것도 없음"의 3-state 머신.
 - `Layout`은 `sidebar`/`main` slot을 받는 shell 컴포넌트(컴포지션 패턴). 자체 상태 없음.
 - `NoteEditor`는 `selectedNoteId`/`isCreating` 변경 시 폼을 동기화하는 `useEffect`를 가진다 — deps에서 `selectedNote`는 제외(`eslint-disable`). 새 필드 추가 시 이 effect도 함께 수정.
 
 ### 타입 (`src/types/note.ts`)
+
 `Note` 인터페이스가 단일 source of truth. 필드 추가 시 `db.json` 시드 데이터, `api/notes.ts`의 `Omit` 사용처, `NotesContext`의 mutation 시그니처를 함께 갱신.
 
 ## 스타일링
 
 Tailwind CSS **v4**(`@tailwindcss/vite` 플러그인). 설정 파일(`tailwind.config.*`) 없이 `src/index.css`의 `@theme` 블록에서 커스텀 토큰을 정의한다:
+
 - 색상은 `bg-foreground`, `text-muted-foreground`, `border-destructive` 등 의미 기반 토큰을 사용. 원시 색(`bg-gray-500`) 추가 금지 — `@theme`에 토큰부터 정의.
 - 폰트: 본문 Pretendard, 디스플레이 Boogaloo(`index.html`에서 CDN 로드).
 - 둥근 모서리는 `rounded-xl`/`rounded-2xl`/`rounded-3xl`로 통일.
@@ -58,19 +63,23 @@ Tailwind CSS **v4**(`@tailwindcss/vite` 플러그인). 설정 파일(`tailwind.c
 ## 코드 컨벤션
 
 ### 컴포넌트 구현 패턴
-- **`export function ComponentName(...)` 형태의 named export + 함수 선언식**. 화살표 함수 컴포넌트나 `React.FC` 사용 안 함. 예외: `App.tsx`만 default export(엔트리이므로 유지).
+
+- **컴포넌트는 반드시 named export 만 사용한다** — `export default` 금지(엔트리 파일 포함). `import { ComponentName } from '...'` 형태로만 가져온다.
+- **`export function ComponentName(...)` 형태의 named export + 함수 선언식**. 화살표 함수 컴포넌트나 `React.FC` 사용 안 함.
 - props는 컴포넌트 바로 위에 `interface ComponentNameProps`로 선언, 비구조화로 받음.
 - 파일 1개 = 컴포넌트 1개, 파일명은 PascalCase로 컴포넌트명과 동일.
 - 자식이 부모 상태를 만지지 않는다 — props down + callback up. 콜백 prop은 `onXxx`, 내부 핸들러는 `handleXxx`.
 - 컴포지션이 필요한 컨테이너(`Layout`)는 `ReactNode` slot prop을 받는다.
 
 ### 상태 관리 방식
+
 - **서버에서 온 도메인 데이터(`notes`)는 Context, UI 모드/폼 입력은 `useState`로 로컬 보관**. Context에 UI 상태를 넣지 않는다.
 - 폼은 controlled — `value` + `onChange` 쌍. 비제어 input/`ref` 사용 안 함.
 - props → 로컬 state 동기화는 `useEffect`로 처리(예: `NoteEditor`가 `selectedNoteId` 바뀔 때 폼 리셋).
 - 화면 모드는 boolean을 분산시키지 않고 App 레벨에서 조합한다(`selectedNoteId` + `isCreating`).
 
 ### API 호출 패턴
+
 - `src/api/notes.ts`에 **리소스 단위로 모든 fetch를 모은다** — 컴포넌트/Context는 절대 `fetch`를 직접 호출하지 않는다.
 - 모든 함수는 `async/await` + `if (!res.ok) throw new Error('Failed to X')` 패턴. 에러 메시지는 영문 동사구로 통일.
 - 반환 타입은 항상 명시(`Promise<Note>` / `Promise<Note[]>` / `Promise<void>`).
@@ -79,10 +88,12 @@ Tailwind CSS **v4**(`@tailwindcss/vite` 플러그인). 설정 파일(`tailwind.c
 - 호출 측(Context)은 try/catch 없이 그대로 throw가 올라오게 하고, **최상단 useEffect 또는 UI 핸들러에서 잡는다**(`NoteEditor.handleSave`처럼).
 
 ### 에러 처리
+
 - **사용자 알림용 `alert()` 금지**. 에러는 `console.error(message, err?)`로 콘솔에만 남긴다.
 - 인라인 에러 UI는 이미 있는 곳(`NoteList`의 `error` 텍스트)만 사용. 새 토스트/모달을 추가하기 전에 합의된 위치에 일원화할 것.
 
 ### 네이밍 규칙
+
 - 컴포넌트/타입/인터페이스: PascalCase. 함수/변수: camelCase. 상수 URL: `API_URL` 같은 단일 식별자 SCREAMING_SNAKE는 아님 — 이 코드베이스는 그냥 `const API_URL` 형태로 충분.
 - 이벤트 핸들러는 `handle` + 동사(`handleSave`, `handleSelectNote`), prop 이름은 `on` + 동사(`onSelect`, `onDone`).
 - API 함수는 `동사 + 리소스`(`fetchNotes`, `createNote`).
