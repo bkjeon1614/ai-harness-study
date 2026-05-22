@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{PROJECT_NAME}} · Architecture</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #111935;
+        --panel-2: #0e1730;
+        --border: #1f2a4d;
+        --text: #e6ecff;
+        --muted: #8a96c2;
+        --accent: #7c9cff;
+        --accent-2: #22d3ee;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #1a2350 0%, transparent 60%),
+          radial-gradient(1000px 500px at 110% 10%, #0f2a4a 0%, transparent 55%), var(--bg);
+        color: var(--text);
+        font-family:
+          'Pretendard',
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial;
+        min-height: 100vh;
+      }
+      header {
+        padding: 32px 40px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      header .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      header .summary {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      header .chip {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      main {
+        padding: 24px 40px 64px;
+        display: grid;
+        gap: 24px;
+      }
+      section.card {
+        background: linear-gradient(180deg, var(--panel), var(--panel-2));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 22px 22px 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      section.card h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        color: var(--accent);
+        letter-spacing: -0.01em;
+      }
+      section.card p.hint {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .diagram {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px;
+        overflow: auto;
+        min-height: 200px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .legend .key {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+      }
+      footer {
+        padding: 24px 40px 40px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+      code.inline {
+        background: rgba(124, 156, 255, 0.12);
+        color: var(--accent);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>{{PROJECT_NAME}} · Architecture</h1>
+      <div class="meta">Generated at <code class="inline">{{GENERATED_AT}}</code></div>
+      <div class="summary">{{SUMMARY}}</div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1. Component Dependency Graph</h2>
+        <p class="hint">
+          각 노드는 <code class="inline">src/</code> 하위 파일이며, 화살표는
+          <strong>import 방향</strong>(의존하는 쪽 → 의존받는 쪽)을 나타낸다. 색상은 레이어(폴더)
+          기준.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+{{MERMAID_DEPENDENCY}}
+          </pre>
+        </div>
+        <div class="legend">
+          <span class="key"
+            ><span class="swatch" style="background: #dbeafe"></span> components</span
+          >
+          <span class="key"><span class="swatch" style="background: #dcfce7"></span> context</span>
+          <span class="key"><span class="swatch" style="background: #ffedd5"></span> api</span>
+          <span class="key"><span class="swatch" style="background: #e5e7eb"></span> types</span>
+          <span class="key"
+            ><span class="swatch" style="background: #ede9fe"></span> root / others</span
+          >
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. State &amp; Data Flow</h2>
+        <p class="hint">
+          사용자 액션이 어떻게 컴포넌트 → Context → API → 백엔드까지 전달되고, 응답이 어떻게 다시
+          state 와 UI 에 반영되는지의 단방향 흐름.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+{{MERMAID_FLOW}}
+          </pre>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3. Directory Tree</h2>
+        <p class="hint">
+          <code class="inline">src/</code> 디렉토리의 파일 구성. 모듈 경계를 확인하는 용도.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+{{MERMAID_TREE}}
+          </pre>
+        </div>
+      </section>
+    </main>
+
+    <footer>Rendered with Mermaid · This file is self-contained except for the Mermaid CDN.</footer>
+
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { curve: 'basis', htmlLabels: true, useMaxWidth: true },
+      });
+    </script>
+  </body>
+</html>

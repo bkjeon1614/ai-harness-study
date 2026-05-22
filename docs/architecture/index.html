@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>notes-app · Architecture</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #111935;
+        --panel-2: #0e1730;
+        --border: #1f2a4d;
+        --text: #e6ecff;
+        --muted: #8a96c2;
+        --accent: #7c9cff;
+        --accent-2: #22d3ee;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #1a2350 0%, transparent 60%),
+          radial-gradient(1000px 500px at 110% 10%, #0f2a4a 0%, transparent 55%), var(--bg);
+        color: var(--text);
+        font-family:
+          'Pretendard',
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial;
+        min-height: 100vh;
+      }
+      header {
+        padding: 32px 40px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      header .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      header .summary {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      header .chip {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      main {
+        padding: 24px 40px 64px;
+        display: grid;
+        gap: 24px;
+      }
+      section.card {
+        background: linear-gradient(180deg, var(--panel), var(--panel-2));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 22px 22px 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      section.card h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        color: var(--accent);
+        letter-spacing: -0.01em;
+      }
+      section.card p.hint {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .diagram {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px;
+        overflow: auto;
+        min-height: 200px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .legend .key {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+      }
+      footer {
+        padding: 24px 40px 40px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+      code.inline {
+        background: rgba(124, 156, 255, 0.12);
+        color: var(--accent);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>notes-app · Architecture</h1>
+      <div class="meta">Generated at <code class="inline">2026-05-22T01:41:08Z</code></div>
+      <div class="summary">
+        <span class="chip">nodes: 9</span>
+        <span class="chip">edges: 12</span>
+        <span class="chip">layers: root · components · context · api · types</span>
+        <span class="chip">cycles: 0</span>
+        <span class="chip">external deps: excluded</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1. Component Dependency Graph</h2>
+        <p class="hint">
+          각 노드는 <code class="inline">src/</code> 하위 파일이며, 화살표는
+          <strong>import 방향</strong>(의존하는 쪽 → 의존받는 쪽)을 나타낸다. 색상은 레이어(폴더)
+          기준.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+graph TD
+  subgraph rootLayer["root"]
+    src_main["main.tsx"]
+    src_App["App.tsx"]
+  end
+  subgraph compLayer["components/"]
+    src_components_Layout["Layout.tsx"]
+    src_components_NoteList["NoteList.tsx"]
+    src_components_NoteItem["NoteItem.tsx"]
+    src_components_NoteEditor["NoteEditor.tsx"]
+  end
+  subgraph ctxLayer["context/"]
+    src_context_NotesContext["NotesContext.tsx"]
+  end
+  subgraph apiLayer["api/"]
+    src_api_notes["notes.ts"]
+  end
+  subgraph typesLayer["types/"]
+    src_types_note["note.ts"]
+  end
+
+  src_main --> src_App
+  src_App --> src_context_NotesContext
+  src_App --> src_components_Layout
+  src_App --> src_components_NoteList
+  src_App --> src_components_NoteEditor
+  src_context_NotesContext --> src_types_note
+  src_context_NotesContext --> src_api_notes
+  src_api_notes --> src_types_note
+  src_components_NoteList --> src_context_NotesContext
+  src_components_NoteList --> src_components_NoteItem
+  src_components_NoteItem --> src_types_note
+  src_components_NoteEditor --> src_context_NotesContext
+
+  classDef rootCls fill:#ede9fe,stroke:#8b5cf6,color:#1e1b4b
+  classDef compCls fill:#dbeafe,stroke:#3b82f6,color:#0c2d6b
+  classDef ctxCls fill:#dcfce7,stroke:#22c55e,color:#14532d
+  classDef apiCls fill:#ffedd5,stroke:#f97316,color:#7c2d12
+  classDef typesCls fill:#e5e7eb,stroke:#6b7280,color:#1f2937
+
+  class src_main,src_App rootCls
+  class src_components_Layout,src_components_NoteList,src_components_NoteItem,src_components_NoteEditor compCls
+  class src_context_NotesContext ctxCls
+  class src_api_notes apiCls
+  class src_types_note typesCls
+          </pre>
+        </div>
+        <div class="legend">
+          <span class="key"
+            ><span class="swatch" style="background: #dbeafe"></span> components</span
+          >
+          <span class="key"><span class="swatch" style="background: #dcfce7"></span> context</span>
+          <span class="key"><span class="swatch" style="background: #ffedd5"></span> api</span>
+          <span class="key"><span class="swatch" style="background: #e5e7eb"></span> types</span>
+          <span class="key"
+            ><span class="swatch" style="background: #ede9fe"></span> root / others</span
+          >
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. State &amp; Data Flow</h2>
+        <p class="hint">
+          사용자가 노트를 저장/삭제할 때 흐름.
+          <code class="inline">NoteEditor.handleSave</code> →
+          <code class="inline">useNotes()</code> → <code class="inline">Context mutation</code> →
+          <code class="inline">api/notes.ts</code> → <code class="inline">json-server</code> 까지
+          단방향. 응답이 돌아오면 <code class="inline">setNotes</code> 로 state 를 갱신해 리렌더링.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart LR
+  A["User Action<br/>(클릭: 저장 / 삭제)"]
+  B["Component<br/>NoteEditor.handleSave<br/>NoteItem.onDelete"]
+  C["useNotes() 훅"]
+  D["Context Mutation<br/>createNote / updateNote / deleteNote"]
+  E["api/notes.ts<br/>createNote / updateNote / deleteNote / fetchNotes"]
+  F["fetch()"]
+  G[("json-server<br/>localhost:3001/notes")]
+  H["setNotes()<br/>(Context state 갱신)"]
+  I["Components re-render<br/>NoteList · NoteEditor"]
+
+  A --> B
+  B --> C
+  C --> D
+  D --> E
+  E --> F
+  F --> G
+  G -- Response JSON --> E
+  E -- Promise resolve --> D
+  D --> H
+  H --> I
+
+  classDef ui fill:#dbeafe,stroke:#3b82f6,color:#0c2d6b
+  classDef ctx fill:#dcfce7,stroke:#22c55e,color:#14532d
+  classDef api fill:#ffedd5,stroke:#f97316,color:#7c2d12
+  classDef ext fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+  classDef state fill:#ede9fe,stroke:#8b5cf6,color:#1e1b4b
+
+  class A,B,I ui
+  class C,D,H ctx
+  class E,F api
+  class G ext
+          </pre>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3. Directory Tree</h2>
+        <p class="hint">
+          <code class="inline">src/</code> 디렉토리의 파일 구성. 모듈 경계를 확인하는 용도.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+graph LR
+  src(("src/"))
+  f_main["main.tsx"]
+  f_app["App.tsx"]
+  f_idx["index.css"]
+  f_ts["test-setup.ts"]
+  d_comp["components/"]
+  d_ctx["context/"]
+  d_api["api/"]
+  d_types["types/"]
+  c_layout["Layout.tsx"]
+  c_list["NoteList.tsx"]
+  c_item["NoteItem.tsx"]
+  c_editor["NoteEditor.tsx"]
+  ctx1["NotesContext.tsx"]
+  api1["notes.ts"]
+  type1["note.ts"]
+
+  src --> f_main
+  src --> f_app
+  src --> f_idx
+  src --> f_ts
+  src --> d_comp
+  src --> d_ctx
+  src --> d_api
+  src --> d_types
+  d_comp --> c_layout
+  d_comp --> c_list
+  d_comp --> c_item
+  d_comp --> c_editor
+  d_ctx --> ctx1
+  d_api --> api1
+  d_types --> type1
+
+  classDef dir fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b
+  classDef file fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+
+  class src,d_comp,d_ctx,d_api,d_types dir
+  class f_main,f_app,f_idx,f_ts,c_layout,c_list,c_item,c_editor,ctx1,api1,type1 file
+          </pre>
+        </div>
+      </section>
+    </main>
+
+    <footer>Rendered with Mermaid · This file is self-contained except for the Mermaid CDN.</footer>
+
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { curve: 'basis', htmlLabels: true, useMaxWidth: true },
+      });
+    </script>
+  </body>
+</html>
