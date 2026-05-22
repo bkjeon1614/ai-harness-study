@@ -30,3 +30,4 @@ dist-ssr/
 
 # Tooling
 .omc/
+.claude/settings.local.json
