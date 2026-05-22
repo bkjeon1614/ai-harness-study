@@ -44,13 +44,15 @@ components/ ──useNotes()──▶ context/NotesContext ──api──▶ ap
 
 ### UI 구조 (`src/App.tsx` + `src/components/`)
 
-- `App`이 `selectedNoteId`와 `isCreating` 두 개의 로컬 상태로 화면 모드를 결정 — "선택", "새로 만들기", "아무것도 없음"의 3-state 머신.
+- `App`이 `selectedNoteId`, `isCreating`, `searchQuery` 로컬 상태를 보관. 앞 두 개는 화면 모드("선택"/"새로 만들기"/"아무것도 없음")를, `searchQuery`는 `SearchBar`(사이드바 상단)에서 받아 `NoteList`로 내려 제목 필터링에 쓰인다 — props down + callback up 그대로.
 - `Layout`은 `sidebar`/`main` slot을 받는 shell 컴포넌트(컴포지션 패턴). 자체 상태 없음.
 - `NoteEditor`는 `selectedNoteId`/`isCreating` 변경 시 폼을 동기화하는 `useEffect`를 가진다 — deps에서 `selectedNote`는 제외(`eslint-disable`). 새 필드 추가 시 이 effect도 함께 수정.
 
 ### 타입 (`src/types/note.ts`)
 
 `Note` 인터페이스가 단일 source of truth. 필드 추가 시 `db.json` 시드 데이터, `api/notes.ts`의 `Omit` 사용처, `NotesContext`의 mutation 시그니처를 함께 갱신.
+
+컴포넌트 의존성 시각화는 `docs/architecture/index.html`(mermaid) 참조. 구조 변경 시 `mermaid-diagram` skill로 재생성.
 
 ## 스타일링
 
@@ -59,6 +61,10 @@ Tailwind CSS **v4**(`@tailwindcss/vite` 플러그인). 설정 파일(`tailwind.c
 - 색상은 `bg-foreground`, `text-muted-foreground`, `border-destructive` 등 의미 기반 토큰을 사용. 원시 색(`bg-gray-500`) 추가 금지 — `@theme`에 토큰부터 정의.
 - 폰트: 본문 Pretendard, 디스플레이 Boogaloo(`index.html`에서 CDN 로드).
 - 둥근 모서리는 `rounded-xl`/`rounded-2xl`/`rounded-3xl`로 통일.
+
+**디자인 시스템은 `docs/design-system/`(The Digital Atelier)가 단일 참조점이다. 스타일 작업 전 반드시 확인** — 폴더 진입 가이드는 `docs/design-system/CLAUDE.md`(작업 트리거별 읽을 파일 매핑), 토큰은 `tokens.md`, 컴포넌트는 `components/<name>.md` (1파일=1컴포넌트). `@theme`에 미정의된 사양 토큰은 ⚠️로 표기되어 있으며 인라인 hex로 잠정 표현 가능.
+
+@docs/design-system/README.md
 
 ## 코드 컨벤션
 
@@ -105,23 +111,11 @@ Tailwind CSS **v4**(`@tailwindcss/vite` 플러그인). 설정 파일(`tailwind.c
 
 ## 커밋 메시지 규칙
 
-`commitlint` + `husky commit-msg` hook 으로 강제됨. 위반 시 커밋 자체가 차단된다. 상세 규칙은 `commitlint.config.js` 참조.
+`commitlint` + `husky commit-msg` 가 강제 — 위반 시 커밋 차단. 상세 규칙은 `commitlint.config.js`, CI 재검증은 `.github/workflows/commitlint.yml`. **`--no-verify` 우회 금지.**
 
-- **형식**: `<type>: <subject>` + 빈 줄 + 본문 (Conventional Commits)
-- **type**: `feat / fix / chore / docs / refactor / test / style / perf / build / ci / revert / init` 중 하나
-- **subject**: 필수, 한글 허용 (케이스 제약 없음)
-- **본문**: 필수, 비어있지 않은 줄 **최소 2줄**
-
-예시:
-
-```
-feat: 검색 기능 추가
-
-SearchBar 컴포넌트를 추가하고 사이드바 상단에 배치했다.
-검색어는 App 에서 보관하고 NoteList 가 제목으로 필터링한다.
-```
-
-`--no-verify` 우회 금지. CI(`.github/workflows/commitlint.yml`)에서 PR 단위 재검증한다.
+- 형식: `<type>: <subject>` + 빈 줄 + 본문(비어있지 않은 줄 **최소 2줄**)
+- type: `feat / fix / chore / docs / refactor / test / style / perf / build / ci / revert / init`
+- subject 한글 허용 (예: `feat: 검색 기능 추가`)
 
 ## 설정 메모
 
