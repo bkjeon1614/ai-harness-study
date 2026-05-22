@@ -103,6 +103,26 @@ Tailwind CSS **v4**(`@tailwindcss/vite` 플러그인). 설정 파일(`tailwind.c
 - **boolean state 접두사 혼재**: `isCreating`(is-)과 `saving`/`loading`(접두사 없음)이 공존. 새 boolean 추가 시 `is`/`has` 접두사로 통일 권장.
 - **`NoteEditor` 의 `useEffect` deps에 `selectedNote` 누락 + `eslint-disable`**: 의도적이지만 위험. `selectedNote`를 deps에 넣거나, 동기화 로직을 파생 state 패턴으로 바꾸는 것이 정석.
 
+## 커밋 메시지 규칙
+
+`commitlint` + `husky commit-msg` hook 으로 강제됨. 위반 시 커밋 자체가 차단된다. 상세 규칙은 `commitlint.config.js` 참조.
+
+- **형식**: `<type>: <subject>` + 빈 줄 + 본문 (Conventional Commits)
+- **type**: `feat / fix / chore / docs / refactor / test / style / perf / build / ci / revert / init` 중 하나
+- **subject**: 필수, 한글 허용 (케이스 제약 없음)
+- **본문**: 필수, 비어있지 않은 줄 **최소 2줄**
+
+예시:
+
+```
+feat: 검색 기능 추가
+
+SearchBar 컴포넌트를 추가하고 사이드바 상단에 배치했다.
+검색어는 App 에서 보관하고 NoteList 가 제목으로 필터링한다.
+```
+
+`--no-verify` 우회 금지. CI(`.github/workflows/commitlint.yml`)에서 PR 단위 재검증한다.
+
 ## 설정 메모
 
 - **TypeScript strict + `noUnusedLocals`/`noUnusedParameters` 활성화** — 사용하지 않는 import/변수는 빌드 차단.
