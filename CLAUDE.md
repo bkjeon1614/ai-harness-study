@@ -22,6 +22,39 @@ npm run test:watch # vitest watch 모드
 - API: `http://localhost:3001/notes`
 - 단일 테스트 실행: `npx vitest run path/to/file.test.ts` 또는 `-t "test name"`로 필터.
 
+## TDD 이슈 워크플로우
+
+새 GitHub 이슈 작업 시 다음 7단계를 순서대로 진행한다. Claude 는 **현재 어느 단계인지 추적**하고, 단계가 끝날 때마다 **다음 단계가 무엇인지, 어떤 명령으로 호출하는지** 명시적으로 제안한다. **자동으로 다음 단계로 넘어가지 않는다.**
+
+| #   | 명령                                                            | 종류  | 책임                                                                 |
+| --- | --------------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
+| 1   | `/test-scenarios N`                                             | skill | 시그니처 + 분류된 시나리오 도출, `docs/features/tag/issue-N.md` 산출 |
+| 2   | `/tdd-red N`                                                    | skill | 시나리오를 실패 테스트로 작성, 매 시나리오 즉시 실패 확인            |
+| 3   | `/tdd-green N`                                                  | skill | 최소 구현으로 모든 테스트 통과                                       |
+| 4   | `@ac-verifier N`                                                | agent | AC 충족도 독립 검증 — **테스트 통과 ≠ AC 충족**                      |
+| 5   | `/tdd-refactor N`                                               | skill | 행동 보존 구조 개선. 회귀 시 즉시 롤백                               |
+| 6   | `/security-review N`                                            | skill | tsc + npm audit + `.env` 노출 점검                                   |
+| 7   | commit → PR `--base feature/<spec>` → squash merge → 이슈 close | 수동  | 분할 커밋, base 브랜치로 PR, 머지 시 자동 close 트리거 (`Closes #N`) |
+
+### 흐름 제어 규칙
+
+- **각 단계 종료 후 Claude 의 응답에는 다음이 포함된다**: (a) 방금 끝난 단계 결과 요약, (b) 다음 단계 명령 (예: "다음 단계: `/tdd-red N`"), (c) 사용자 승인 대기 명시.
+- **자동 연쇄 진행 금지** — Step N 완료 후 사용자 명시 승인 없이 Step N+1 의 슬래시/에이전트 명령을 Claude 가 대신 실행하지 않는다. 사용자가 직접 명령을 입력하거나 "다음 단계 진행" 같이 명시해야 한다. (단, 사용자가 "전부 진행해줘" / "권장사항 전부 완료" 같이 명시적 일괄 위임을 한 경우에만 예외 적용.)
+- **단계 건너뛰기 감지** — 사용자가 Step 2 를 건너뛰고 Step 3 를 호출하면, Claude 는 진입 조건 미충족 (예: 시나리오 미작성 / 테스트 파일 미생성) 을 보고하고 선행 단계로 안내. 각 스킬의 Step 0 입력 검증과 동일한 의도.
+- **단계 회귀 감지** — 예: REFACTOR 중 회귀 발생 시 GREEN 으로 자동 되돌리지 않고 사용자에게 보고 + 롤백 결정 위임.
+- **GATE 위반 보고** — 인간 승인 게이트(`test-scenarios` 의 Step 2/7, `tdd-refactor` 의 Step 4, `security-review` 의 Step 4) 는 사용자 명시 승인 응답 없이 다음 Step 으로 진입하지 않는다.
+
+### 이슈 의존성 처리
+
+- 이슈가 다른 이슈에 의존하면 **선행 이슈가 머지된 base 위에서 새 브랜치를 분기**한다. 예: TAG-2 가 TAG-1 에 의존하면 TAG-1 머지 후 `git checkout main && git pull && git checkout -b feature/tag-2`.
+- 의존성은 `docs/features/<feature>/issues.md` 의 "의존성 / 진행 순서" 섹션에 기록.
+- 의존 이슈가 미머지인 상태에서 다음 이슈 RED 를 시작하면 시그니처/타입 충돌 위험 (예: 이번 사이클의 `NoteList.test.tsx` FIXTURE 가 후속 이슈의 Note 타입 확장과 충돌해 tsc 에러 발생). Claude 는 진입 시점에 이 위험을 경고하고 base 브랜치 정렬을 권장.
+
+### Slash vs Agent
+
+- `slash 명령` (`/test-scenarios`, `/tdd-*`, `/security-review`) — 같은 세션 컨텍스트 안에서 워크플로우를 실행. Claude 가 직접 도구를 호출하며 워크플로우 단계를 따른다.
+- `@agent` (`@ac-verifier`) — 독립 서브에이전트 호출. 메인 컨텍스트와 분리된 환경에서 검증만 하고 결과를 회신. AC 검증처럼 "메인이 만든 결과를 제3자 시각으로 평가" 가 자연스러운 단계에 사용.
+
 ## 아키텍처
 
 3계층 단방향 데이터 흐름. UI 컴포넌트는 직접 fetch하지 않고 반드시 Context를 거친다.
