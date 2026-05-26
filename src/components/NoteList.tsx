@@ -1,4 +1,5 @@
 import { useNotes } from '../context/NotesContext';
+import { matchesQuery } from '../lib/search';
 import { NoteItem } from './NoteItem';
 
 interface NoteListProps {
@@ -22,8 +23,7 @@ export function NoteList({ selectedNoteId, onSelect, searchQuery = '' }: NoteLis
     return <p className="text-sm text-muted-foreground text-center py-8">노트가 없습니다</p>;
   }
 
-  const query = searchQuery.trim().toLowerCase();
-  const filteredNotes = query ? notes.filter((n) => n.title.toLowerCase().includes(query)) : notes;
+  const filteredNotes = notes.filter((n) => matchesQuery(n, searchQuery));
 
   if (filteredNotes.length === 0) {
     return <p className="text-sm text-muted-foreground text-center py-8">검색 결과가 없습니다</p>;
