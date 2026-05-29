@@ -131,4 +131,51 @@ describe('NoteEditor', () => {
       tags: [],
     });
   });
+
+  it("should call updateNote with tags equal to the selected note's existing tags when saving an edited note whose tags are non-empty", async () => {
+    mockNotes = [
+      {
+        id: 'n1',
+        title: '제목',
+        content: '본문',
+        tags: ['react', 'study'],
+        createdAt: '2026-05-26T00:00:00.000Z',
+        updatedAt: '2026-05-26T00:00:00.000Z',
+      },
+    ];
+    mockUpdateNote.mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: '저장' }));
+
+    expect(mockUpdateNote).toHaveBeenCalledTimes(1);
+    expect(mockUpdateNote).toHaveBeenCalledWith(
+      'n1',
+      expect.objectContaining({ tags: ['react', 'study'] }),
+    );
+  });
+
+  it('should call updateNote with tags as an empty array when saving an edited note whose existing tags are an empty array', async () => {
+    mockNotes = [
+      {
+        id: 'n1',
+        title: '제목',
+        content: '본문',
+        tags: [],
+        createdAt: '2026-05-26T00:00:00.000Z',
+        updatedAt: '2026-05-26T00:00:00.000Z',
+      },
+    ];
+    mockUpdateNote.mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: '저장' }));
+
+    expect(mockUpdateNote).toHaveBeenCalledTimes(1);
+    expect(mockUpdateNote).toHaveBeenCalledWith('n1', expect.objectContaining({ tags: [] }));
+  });
 });
